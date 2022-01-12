@@ -4,10 +4,12 @@ import sys
 from main import *
 import main
 import hub
+import gameLogic
 import time
 
 
 threads = []
+objects = []
 
 
 game_widget = {
@@ -18,14 +20,18 @@ game_widget = {
     'myline': [],
     'enline': [],
     'ball': [],
-    'result': []
+    'result': [],
+    'central_line': []
 }
 
 game_val = {
-    'my_pos': 0,    # 0 - 100
-    'en_pos': 0,    # 0 - 100
+    'my_pos_x': 0,
+    'my_pos_y': 0,# 0 - 100
+    'en_pos_x': 0,
+    'en_pos_y': 0,# 0 - 100
     'ball_x': 0,    # 0 - 200
-    'ball_y': 0,    # 0 - 100
+    'ball_y': 0,
+    'ball_radius': 0,# 0 - 100
     'my_score': 0,
     'en_score': 0,
     'is_game': 0,
@@ -37,13 +43,16 @@ game_opt = {
     'line_len': 160,
     'line_wid': 20,
     'ball_rad': 10,
-    'from_border': 10
+    'from_border': 10,
+    'im_width': 2000,
+    'im_height': 1000
 }
 
 
 # When Press Start
 def is_ready():
     game_widget['startbutton'][-1].hide()
+    game_widget['central_line'][-1].show()
     game_val['is_game'] = 1
     game()
 
@@ -57,6 +66,7 @@ def is_end(win):
 # After the Game Ends
 def game_is_over():
     game_val['is_game'] = 0
+    game_widget['central_line'][-1].hide()
     game_widget['endbutton'][-1].show()
     game_widget['ball'][-1].hide()
     res = 'You Won!' if game_val['my_score'] > game_val['en_score']\
@@ -76,6 +86,8 @@ def game_clear(win):
             game_widget[h] = []
     for v in game_val:
         game_val[v] = 0
+    threads = []
+    objects = []
 
 
 # Keyboard
@@ -83,9 +95,9 @@ def keyHandler(event, status):
     if status == 'P':
         if not event.isAutoRepeat():
             if event.key() == QtCore.Qt.Key.Key_W:
-                game_val['key'] = 1
-            elif event.key() == QtCore.Qt.Key.Key_S:
                 game_val['key'] = -1
+            elif event.key() == QtCore.Qt.Key.Key_S:
+                game_val['key'] = 1
             elif event.key() == QtCore.Qt.Key.Key_Escape:
                 game_val['esckey'] = 1
     elif status == 'R':
@@ -104,36 +116,73 @@ def draw():
     game_widget['enscore'][-1].setText(str(game_val['en_score']))
     game_widget['enscore'][-1].show()
 
-    game_widget['ball'][-1].setGeometry(QtCore.QRect((main.glob_params['windows_width'] - 2 * game_opt['ball_rad']) * game_val['ball_x'] / 200,
-                                                     (main.glob_params['windows_height'] - 2 * game_opt['ball_rad']) * game_val['ball_y'] / 100,
+    game_widget['ball'][-1].setGeometry(QtCore.QRect((main.glob_params['windows_width'] - 2 * game_opt['ball_rad']) * game_val['ball_x'] / game_opt['im_width'],
+                                                     (main.glob_params['windows_height'] - 2 * game_opt['ball_rad']) * game_val['ball_y'] / game_opt['im_height'],
                                                      2 * game_opt['ball_rad'], 2 * game_opt['ball_rad']))
     game_widget['ball'][-1].show()
 
     game_widget['myline'][-1].setGeometry(QtCore.QRect(game_opt['from_border'],
-                                                    (main.glob_params['windows_height'] - game_opt['line_len']) * game_val['my_pos'] / 100,
+                                                    (main.glob_params['windows_height'] - game_opt['line_len']) * game_val['my_pos_x'] / game_opt['im_height'],
                                                     game_opt['line_wid'], game_opt['line_len']))
     game_widget['myline'][-1].show()
 
     game_widget['enline'][-1].setGeometry(QtCore.QRect(main.glob_params['windows_width']-game_opt['from_border']-game_opt['line_wid'],
-                                                       (main.glob_params['windows_height'] - game_opt['line_len']) * game_val['en_pos'] / 100,
+                                                       (main.glob_params['windows_height'] - game_opt['line_len']) * game_val['en_pos_x'] / game_opt['im_height'],
                                                        game_opt['line_wid'], game_opt['line_len']))
     game_widget['enline'][-1].show()
 
 
+# Create imaginary numbers
+def imagine():
+    game_val['my_pos_x'] = game_opt['im_height'] / 2
+    game_val['en_pos_x'] = game_opt['im_height'] / 2
+    game_val['ball_x'] = game_opt['im_width'] / 2
+    game_val['ball_y'] = game_opt['im_height'] / 2
+
+    tmp_my = game_opt['from_border'] + game_opt['line_wid']/2
+    game_val['my_pos_y'] = tmp_my / main.glob_params['windows_width'] * game_opt['im_width']
+
+    tmp_en = main.glob_params['windows_width'] - game_opt['from_border'] + game_opt['line_wid'] / 2
+    game_val['en_pos_y'] = tmp_en / main.glob_params['windows_width'] * game_opt['im_width']
+
+    game_val['ball_radius'] = game_opt['ball_rad'] / main.glob_params['windows_width'] * game_opt['im_width']
+
+
 # Game
 def game():
-    #game_is_over()
-    pass
+    thread = QtCore.QThread()
+    gameObject = gameLogic.myGame()
+    gameObject.moveToThread(thread)
+    thread.started.connect(gameObject.run)
+    gameObject.finished.connect(thread.quit)
+    gameObject.finished.connect(gameObject.deleteLater)
+    thread.finished.connect(thread.deleteLater)
+
+    threads.append(thread)
+    objects.append(gameObject)
+
+    threads[-1].start()
 
 
 # Drawing and setting the window
 def game_ui(win):
-    game_val['my_pos'] = 50
-    game_val['en_pos'] = 50
-    game_val['ball_x'] = 100
-    game_val['ball_y'] = 50
+    imagine()
 
     win.setStyleSheet("background-color: #363636;")
+
+    # Dotted line
+    central_line = QtWidgets.QFrame(win)
+    central_line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
+    central_line.setStyleSheet(
+        "background: transparent;" +
+        f"border: {game_opt['line_wid']/2}px white;" +
+        "border-style: dotted;"
+    )
+    central_line.setGeometry(
+        QtCore.QRect((main.glob_params['windows_width'] - game_opt['line_wid']/2) / 2, 0,
+                     game_opt['line_wid']/2, main.glob_params['windows_height']))
+    game_widget['central_line'].append(central_line)
+    game_widget['central_line'][-1].hide()
 
     # Start button
     startbutton = QtWidgets.QPushButton("Start", win)
@@ -181,18 +230,22 @@ def game_ui(win):
 
     # My Palette
     my_line = QtWidgets.QFrame(win)
-    my_line.setLineWidth(0)
-    my_line.setMidLineWidth(game_opt['line_wid'])
+    my_line.setLineWidth(game_opt['line_wid'])
     my_line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
-    my_line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+    my_line.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
+    my_line.setStyleSheet(
+        "color: 'white';"
+    )
     game_widget['myline'].append(my_line)
 
     # Enemy Palette
     en_line = QtWidgets.QFrame(win)
-    en_line.setLineWidth(0)
-    en_line.setMidLineWidth(game_opt['line_wid'])
+    en_line.setLineWidth(game_opt['line_wid'])
     en_line.setFrameShape(QtWidgets.QFrame.Shape.VLine)
-    en_line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+    en_line.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
+    en_line.setStyleSheet(
+        "color: 'white';"
+    )
     game_widget['enline'].append(en_line)
 
     # Ball
@@ -215,11 +268,7 @@ def game_ui(win):
     game_widget['result'].append(endscore)
     game_widget['result'][-1].hide()
 
+
     # Draw Palettes, Ball and Scores
     draw()
 
-# Game itself
-class myGame(QtCore.QThread):
-    def __init__(self):
-        QtCore.QThread.__init__(self)
-    pass
