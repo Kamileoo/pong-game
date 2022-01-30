@@ -31,7 +31,25 @@ void Game::gameLoop()
 {
     std::cout<<"Game loop\n";
     pthread_detach(pthread_self());
+    int playerPositionts[]={500,500};
+    int ballPosition[]={500,1000};
+    int nB=-1;
+    char buff[10];
+    usleep(100000000);
+    while(1){
+        int nBytes=-1;
+        
+        for(unsigned int i=0; i<this->playersFD.size();i++){
+            nBytes=read(this->playersFD[i],buff,sizeof(buff)/sizeof(buff[0]));
+            //std::cout<<nBytes;
+            if(nBytes>=4){
+                playerPositionts[i]+=atoi(buff);
+                std::cout<<playerPositionts[i]<<std::endl;
+            }
+            usleep(1000000);
+        }
 
+    }
     for(int i=3; i>0; i--)
     {
         char msg=static_cast<char>(i+48);
@@ -47,10 +65,13 @@ void Game::gameLoop()
     }
 }
 
+//void* Game::receivePlayersInput(void* gamePtr)
+
+
 void* Game::startGameLoop(void* gamePtr)
 {
-	Game* game=(Game*)gamePtr;
-	game->gameLoop();
+    Game* game=(Game*)gamePtr;
+    game->gameLoop();
     return NULL;
 }
 

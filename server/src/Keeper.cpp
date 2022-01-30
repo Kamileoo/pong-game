@@ -13,9 +13,8 @@ Keeper::Keeper()
 
 void Keeper::createListener(int listenerPort)
 {
-	std::cout<<"Starting server...\n";
-	int server_socket_descriptor;
-    int connectionDescriptor;
+    std::cout<<"Starting server...\n";
+    int server_socket_descriptor;
     int bind_result;
     int listen_result;
     char reuse_addr_val = 1;
@@ -48,24 +47,25 @@ void Keeper::createListener(int listenerPort)
         printf("Error during resizing queue.\n");
         exit(1);
     }
-	this->listenerFD=server_socket_descriptor;
+    this->listenerFD=server_socket_descriptor;
 }
 
-void Keeper::startListen(){
-	int connectionDescriptor=-1;
-	std::cout<<"Waiting for connection...\n";
-	while(1)
-   {
-       connectionDescriptor = accept(this->listenerFD, NULL, NULL);
-       if (connectionDescriptor < 0)
-       {
-           fprintf(stderr, "Błąd przy próbie utworzenia gniazda dla połączenia.\n");
-           exit(1);
-       }
-       this->handleConnection(connectionDescriptor);
-   }
+void Keeper::startListen()
+{
+    int connectionDescriptor=-1;
+    std::cout<<"Waiting for connection...\n";
+    while(1)
+    {
+        connectionDescriptor = accept(this->listenerFD, NULL, NULL);
+        if (connectionDescriptor < 0)
+        {
+            fprintf(stderr, "Błąd przy próbie utworzenia gniazda dla połączenia.\n");
+            exit(1);
+        }
+        this->handleConnection(connectionDescriptor);
+    }
 
-   close(this->listenerFD);
+    close(this->listenerFD);
 
 }
 

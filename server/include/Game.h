@@ -8,7 +8,7 @@ class Game
     	static unsigned int noPlayers;
 
     	static void* startGameLoop(void*);
-
+		//void* Game::receivePlayersInput(void* gamePtr);
         Game();
         virtual ~Game();
         bool isFull();
@@ -22,5 +22,6 @@ class Game
 		std::vector<int> playersFD;
 		pthread_t thread;
 };
+
 
 #endif // GAME_H

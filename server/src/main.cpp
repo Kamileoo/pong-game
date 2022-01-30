@@ -1,6 +1,6 @@
 #include "Keeper.h"
 
-#define SERVER_PORT 1234
+#define SERVER_PORT 2000
 
 int main(int argc, char* argv[])
 {
