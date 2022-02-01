@@ -68,10 +68,22 @@ void Keeper::startListen()
     close(this->listenerFD);
 
 }
+void Keeper::removeFinishedGames()
+{
+    for(int i=games.size()-1; i>=0 && !games.empty(); i--)
+    {
+        std::cout<<games.size()<<endl;
+        std::cout<<i<<endl;
+        if(games[i]->finished()){
+        games.erase(games.begin()+i);
+        }
+    }
+}
 
 void Keeper::handleConnection(int connectionDescriptor)
 {
     std::cout<<"New connection is handled...\n";
+    removeFinishedGames();
     bool connectionServed=false;
     //Try to add player to existing game
     for(auto &game:this->games)

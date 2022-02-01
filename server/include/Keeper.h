@@ -11,6 +11,7 @@ class Keeper
 		void startListen();
         void createListener(int listenerPort);
     private:
+        void removeFinishedGames();
         vector<std::unique_ptr<Game>> games;
         static const int QUEUE_SIZE = 5;
 		int listenerFD=-1;

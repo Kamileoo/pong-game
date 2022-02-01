@@ -1,12 +1,12 @@
 #include "Keeper.h"
-
-#define SERVER_PORT 2000
-
+#include <cstdlib>
 int main(int argc, char* argv[])
 {
-   Keeper keeper;
-   keeper.createListener(SERVER_PORT);
-   keeper.startListen();
+    int server_port=atoi(argv[1]);
+    Keeper keeper;
 
-   return 0;
+    keeper.createListener(server_port);
+    keeper.startListen();
+
+    return 0;
 }
