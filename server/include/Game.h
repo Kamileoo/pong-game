@@ -1,26 +1,46 @@
 #ifndef GAME_H
 #define GAME_H
 #include <vector>
+#include <sys/epoll.h>
+
 #include <pthread.h>
 class Game
 {
-    public:
-    	static unsigned int noPlayers;
+public:
+    static unsigned int maxNoPlayers;
 
-    	static void* startGameLoop(void*);
-		//void* Game::receivePlayersInput(void* gamePtr);
-        Game();
-        virtual ~Game();
-        bool isFull();
-		void addPlayer(int connectionDescriptor);
-		void start();
+    static void* startGameLoop(void*);
+    static void* startReceivePlayersInput(void* gamePtr);
+    Game();
+    virtual ~Game();
+    bool isFull();
+    void addPlayer(int connectionDescriptor);
+    void start();
+    bool finished();
 
 
-    private:
-		bool isFull_;
-		void gameLoop();
-		std::vector<int> playersFD;
-		pthread_t thread;
+private:
+    void updateBallSpeed();
+    int updatePlayersPositions();
+    bool broadcastState();
+    void disconnectPlayers();
+    bool isFull_;
+    void gameLoop();
+    int playerPositions[2]= {500,500};
+    int playerMove[2]={0,0};
+    int ballPosition[2]= {1000,500};
+    int ballSpeed[2]={10,0};
+    std::vector<int> playersFD;
+    void updateGameState();
+    char writeBuff[100];
+    char readBuff[100];
+    int epollFD;
+    epoll_event events[2];
+    pthread_t loopThread;
+    pthread_t rcvThread;
+    bool gameFinished=false;
+
+    unsigned int padSize=200;
 };
 
 
