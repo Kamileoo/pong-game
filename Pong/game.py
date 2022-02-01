@@ -25,6 +25,7 @@ game_widget = {
 }
 
 game_val = {
+    'move_x':0,
     'my_pos_x': 0,
     'my_pos_y': 0,# 0 - 100
     'en_pos_x': 0,
@@ -93,13 +94,10 @@ def game_clear(win):
 # Keyboard
 def keyHandler(event, status):
     if status == 'P':
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key.Key_W:
-                game_val['key'] = -1
-            elif event.key() == QtCore.Qt.Key.Key_S:
-                game_val['key'] = 1
-            elif event.key() == QtCore.Qt.Key.Key_Escape:
-                game_val['esckey'] = 1
+        if event.key() == QtCore.Qt.Key.Key_W:
+            game_val['move_x'] -=8
+        if event.key() == QtCore.Qt.Key.Key_S:
+            game_val['move_x'] +=8
     elif status == 'R':
         if not event.isAutoRepeat():
             game_val['key'] = 0
@@ -151,7 +149,7 @@ def imagine():
 # Game
 def game():
     thread = QtCore.QThread()
-    gameObject = gameLogic.myGame()
+    gameObject = gameLogic.MyGame()
     gameObject.moveToThread(thread)
     thread.started.connect(gameObject.run)
     gameObject.finished.connect(thread.quit)

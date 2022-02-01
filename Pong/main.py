@@ -8,6 +8,8 @@ import hub
 glob_params = {
     'windows_height': 512,
     'windows_width': 1024,
+    'ip': -1,
+    'port': -1
 }
 
 
@@ -22,6 +24,12 @@ class MyWindow(QtWidgets.QWidget):
         if game.game_val['is_game']:
             game.keyHandler(event, 'R')
 
+
+if len(sys.argv)<3:
+    print("Specify arguments - <serwer_ip_address> <serwer_port>")
+    exit(1)
+glob_params['ip']=sys.argv[1]
+glob_params['port']=sys.argv[2]
 app = QtWidgets.QApplication(sys.argv)
 win = MyWindow()
 win.setWindowTitle("Pong")
