@@ -1,11 +1,7 @@
-
-from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsEllipseItem, QPushButton
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtNetwork import QTcpSocket, QAbstractSocket
-import sys
-import main
+import config
 import game
-import time
 
 
 # Game itself
@@ -18,8 +14,8 @@ class MyGame(QtCore.QObject):
         socket = QTcpSocket()
         socket.connected.connect(lambda: print("POlączono z serwerem"))
         socket.disconnected.connect(lambda: print("Disconnected"))
-        ip=main.glob_params['ip']
-        port=int(main.glob_params['port'])
+        ip=config.glob_params['ip']
+        port=int(config.glob_params['port'])
         socket.connectToHost(ip, port, protocol=QAbstractSocket.NetworkLayerProtocol.IPv4Protocol)
         socket.waitForConnected(-1)
         socket.waitForReadyRead(-1)

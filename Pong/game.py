@@ -1,11 +1,7 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsEllipseItem, QPushButton
 from PyQt6 import QtCore, QtGui, QtWidgets
-import sys
-from main import *
-import main
 import hub
 import gameLogic
-import time
+import config
 
 
 threads = []
@@ -114,18 +110,18 @@ def draw():
     game_widget['enscore'][-1].setText(str(game_val['en_score']))
     game_widget['enscore'][-1].show()
 
-    game_widget['ball'][-1].setGeometry(QtCore.QRect((main.glob_params['windows_width'] - 2 * game_opt['ball_rad']) * game_val['ball_x'] / game_opt['im_width'],
-                                                     (main.glob_params['windows_height'] - 2 * game_opt['ball_rad']) * game_val['ball_y'] / game_opt['im_height'],
+    game_widget['ball'][-1].setGeometry(QtCore.QRect((config.glob_params['windows_width'] - 2 * game_opt['ball_rad']) * game_val['ball_x'] / game_opt['im_width'],
+                                                     (config.glob_params['windows_height'] - 2 * game_opt['ball_rad']) * game_val['ball_y'] / game_opt['im_height'],
                                                      2 * game_opt['ball_rad'], 2 * game_opt['ball_rad']))
     game_widget['ball'][-1].show()
 
     game_widget['myline'][-1].setGeometry(QtCore.QRect(game_opt['from_border'],
-                                                    (main.glob_params['windows_height'] - game_opt['line_len']) * game_val['my_pos_x'] / game_opt['im_height'],
+                                                    (config.glob_params['windows_height'] - game_opt['line_len']) * game_val['my_pos_x'] / game_opt['im_height'],
                                                     game_opt['line_wid'], game_opt['line_len']))
     game_widget['myline'][-1].show()
 
-    game_widget['enline'][-1].setGeometry(QtCore.QRect(main.glob_params['windows_width']-game_opt['from_border']-game_opt['line_wid'],
-                                                       (main.glob_params['windows_height'] - game_opt['line_len']) * game_val['en_pos_x'] / game_opt['im_height'],
+    game_widget['enline'][-1].setGeometry(QtCore.QRect(config.glob_params['windows_width']-game_opt['from_border']-game_opt['line_wid'],
+                                                       (config.glob_params['windows_height'] - game_opt['line_len']) * game_val['en_pos_x'] / game_opt['im_height'],
                                                        game_opt['line_wid'], game_opt['line_len']))
     game_widget['enline'][-1].show()
 
@@ -138,12 +134,12 @@ def imagine():
     game_val['ball_y'] = game_opt['im_height'] / 2
 
     tmp_my = game_opt['from_border'] + game_opt['line_wid']/2
-    game_val['my_pos_y'] = tmp_my / main.glob_params['windows_width'] * game_opt['im_width']
+    game_val['my_pos_y'] = tmp_my / config.glob_params['windows_width'] * game_opt['im_width']
 
-    tmp_en = main.glob_params['windows_width'] - game_opt['from_border'] + game_opt['line_wid'] / 2
-    game_val['en_pos_y'] = tmp_en / main.glob_params['windows_width'] * game_opt['im_width']
+    tmp_en = config.glob_params['windows_width'] - game_opt['from_border'] + game_opt['line_wid'] / 2
+    game_val['en_pos_y'] = tmp_en / config.glob_params['windows_width'] * game_opt['im_width']
 
-    game_val['ball_radius'] = game_opt['ball_rad'] / main.glob_params['windows_width'] * game_opt['im_width']
+    game_val['ball_radius'] = game_opt['ball_rad'] / config.glob_params['windows_width'] * game_opt['im_width']
 
 
 # Game
@@ -177,8 +173,8 @@ def game_ui(win):
         "border-style: dotted;"
     )
     central_line.setGeometry(
-        QtCore.QRect((main.glob_params['windows_width'] - game_opt['line_wid']/2) / 2, 0,
-                     game_opt['line_wid']/2, main.glob_params['windows_height']))
+        QtCore.QRect((config.glob_params['windows_width'] - game_opt['line_wid']/2) / 2, 0,
+                     game_opt['line_wid']/2, config.glob_params['windows_height']))
     game_widget['central_line'].append(central_line)
     game_widget['central_line'][-1].hide()
 
@@ -262,7 +258,7 @@ def game_ui(win):
         "background: transparent;"
     )
     endscore.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    endscore.setGeometry(QtCore.QRect(0,main.glob_params['windows_height']/4 , main.glob_params['windows_width'], 40))
+    endscore.setGeometry(QtCore.QRect(0,config.glob_params['windows_height']/4 , config.glob_params['windows_width'], 40))
     game_widget['result'].append(endscore)
     game_widget['result'][-1].hide()
 
