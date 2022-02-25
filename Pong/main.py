@@ -1,14 +1,9 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import sys
-import login
+import mylogin
 import game
 import hub
-
-
-glob_params = {
-    'windows_height': 512,
-    'windows_width': 1024,
-}
+import config
 
 
 class MyWindow(QtWidgets.QWidget):
@@ -22,12 +17,22 @@ class MyWindow(QtWidgets.QWidget):
         if game.game_val['is_game']:
             game.keyHandler(event, 'R')
 
+
+if len(sys.argv)<3:
+    print("Specify arguments - <serwer_ip_address> <serwer_port>")
+    exit(1)
+config.glob_params['ip']=sys.argv[1]
+config.glob_params['port']=sys.argv[2]
 app = QtWidgets.QApplication(sys.argv)
 win = MyWindow()
 win.setWindowTitle("Pong")
 win.setFixedSize(1024, 512)
 
-hub.hub_ui(win)
+config.window = win
+config.glob_grid = QtWidgets.QGridLayout(config.window)
+
+#hub.hub_ui(win)
+mylogin.login_ui()
 
 win.show()
 sys.exit(app.exec())
