@@ -60,15 +60,12 @@ int Game::updatePlayersPositions()
             playerMove[events[i].data.u32]+=atoi(buff)*sign;
             //std::cout<<atoi(buff)<<"LICZBA BAJTOW"<<noBytesRead<<std::endl;
         }
-
     }
     return 1;
 }
 bool Game::broadcastState()
 {
     //Broad cast winner
-
-
     int idxs[2]= {-1,-1};
     bool writeOK=true;
     for(unsigned int i=0; i<this->playersFD.size(); i++)
