@@ -56,11 +56,13 @@ CREATE TABLE participants(
     PRIMARY KEY (game_id, user_id)
 );
 -- functions and procedures
-drop function if exists add_game;
+drop procedure if exists add_game;
 drop trigger if exists update_player_stats;
 DELIMITER $$
-create function add_game(start_time datetime, end_time datetime,
-    winner_id BIGINT, loser_id BIGINT) returns BIGINT
+create procedure add_game(IN start_time datetime,
+    IN end_time datetime,
+    IN winner_id BIGINT,
+    IN loser_id BIGINT)
     BEGIN
     DECLARE game_id bigint;
     INSERT INTO games (start_time, end_time) values(start_time, end_time);
@@ -69,7 +71,6 @@ create function add_game(start_time datetime, end_time datetime,
             game_id, winner_id, 'W', 1);
     insert into participants values(
             game_id, loser_id, 'L', 0);
-        return(game_id);
     END$$
 
 create trigger update_plater_stats AFTER INSERT 
@@ -111,9 +112,9 @@ values('domek@nic.pl', 'nick1', '123'),
 ('domek@nic1.pl', 'nick2', '123'),
 ('domek@bajonajo.com', 'nick3', '1234');
 insert into achivements(name) values ('TWO_GAMES');
-SET @X=add_game('2013-01-23 01:14:04','2013-01-23 01:14:04',1,2);
-SET @X=add_game('2013-01-23 01:14:04','2013-01-23 01:14:04',2,1);
-SET @X=add_game('2013-01-23 01:14:04','2013-01-23 01:14:04',3,1);
+CALL add_game('2013-01-23 01:14:04','2013-01-23 01:14:04',1,2);
+CALL add_game('2013-01-23 01:14:04','2013-01-23 01:14:04',2,1);
+CALL add_game('2013-01-23 01:14:04','2013-01-23 01:14:04',3,1);
 
 COMMIT;
 DELIMITER ;
