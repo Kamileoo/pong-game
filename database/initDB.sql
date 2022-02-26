@@ -99,7 +99,8 @@ create procedure add_login_event(
     IN system_name VARCHAR(40),
     IN system_version VARCHAR(10),
     IN ip_address VARCHAR(15),
-    IN user_id BIGINT
+    IN user_id BIGINT,
+    IN login_time datetime
 )BEGIN
 INSERT INTO logins_history
 VALUES(
@@ -107,6 +108,7 @@ VALUES(
     system_version,
     ip_address,
     user_id,
+    login_time,
     NOW()
 );
 END$$
