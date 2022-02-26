@@ -21,6 +21,8 @@ public:
 
 private:
     void updateBallSpeed();
+    void updateWinner();
+
     int updatePlayersPositions();
     bool broadcastState();
     void disconnectPlayers();
@@ -31,6 +33,8 @@ private:
     int ballPosition[2]= {1000,500};
     int ballSpeed[2]={10,0};
     std::vector<int> playersFD;
+    std::vector<int> playersId;
+
     void updateGameState();
     char writeBuff[100];
     char readBuff[100];
@@ -39,6 +43,8 @@ private:
     pthread_t loopThread;
     pthread_t rcvThread;
     bool gameFinished=false;
+    int winner=-1;
+
 
     unsigned int padSize=200;
 };

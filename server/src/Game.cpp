@@ -34,6 +34,9 @@ bool Game::isFull()
 
 void Game::addPlayer(int connectionDescriptor)
 {
+    read(connectionDescriptor,readBuff,5);
+    int playerId=atoi(readBuff);
+    this->playersId.push_back(playerId);
     this->playersFD.push_back(connectionDescriptor);
     if (this->playersFD.size()==Game::maxNoPlayers)this->isFull_=true;
 }
@@ -57,12 +60,12 @@ int Game::updatePlayersPositions()
             playerMove[events[i].data.u32]+=atoi(buff)*sign;
             //std::cout<<atoi(buff)<<"LICZBA BAJTOW"<<noBytesRead<<std::endl;
         }
-
     }
     return 1;
 }
 bool Game::broadcastState()
 {
+    //Broad cast winner
     int idxs[2]= {-1,-1};
     bool writeOK=true;
     for(unsigned int i=0; i<this->playersFD.size(); i++)
@@ -80,12 +83,28 @@ bool Game::broadcastState()
             idxs[1]=0;
             ballModXPos=WIDTH-ballPosition[X];
         }
+        if(winner!=-1)
+        {
+            sprintf(writeBuff, "%d,%d,%d,%d\n", -1, -1, -1, idxs[winner]);
+            write(this->playersFD[i], writeBuff, strlen(writeBuff));
 
-        sprintf(writeBuff, "%d,%d,%d,%d\n", this->playerPositions[idxs[0]], this->playerPositions[idxs[1]],
-                ballModXPos,this->ballPosition[Y]);
+        }
+        else
+        {
+            sprintf(writeBuff, "%d,%d,%d,%d\n", this->playerPositions[idxs[0]], this->playerPositions[idxs[1]],
+                    ballModXPos,this->ballPosition[Y]);
 
-        int writen_bytes=write(this->playersFD[i], writeBuff, strlen(writeBuff));
-        if (writen_bytes==-1) writeOK=false;
+            int writen_bytes=write(this->playersFD[i], writeBuff, strlen(writeBuff));
+            if (writen_bytes==-1) writeOK=false;
+        }
+
+    }
+    //Send players id to loser
+    if(winner!=-1)
+    {
+            sprintf(writeBuff, "%d,%d\n", this->playersId[0],this->playersId[1]);
+            write(this->playersFD[winner], writeBuff, strlen(writeBuff));
+            writeOK=false;
     }
     return writeOK;
 }
@@ -104,6 +123,7 @@ void Game::updateBallSpeed()
 }
 void Game::updateGameState()
 {
+    updateWinner();
     updateBallSpeed();
     for(int i=0; i<sizeof(ballSpeed)/sizeof(ballSpeed[0]); i++)
     {
@@ -115,6 +135,11 @@ void Game::updateGameState()
         playerPositions[i]= std::clamp(playerPositions[i]+std::clamp(playerMove[i],-100,100),0,HIGHT);
         playerMove[i]=0;
     }
+}
+void Game::updateWinner()
+{
+    if(ballPosition[X]<0) winner=1;
+    if (ballPosition[X]>WIDTH) winner=0;
 }
 
 void Game::gameLoop()
