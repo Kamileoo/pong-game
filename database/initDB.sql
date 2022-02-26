@@ -56,14 +56,14 @@ CREATE TABLE participants(
     PRIMARY KEY (game_id, user_id)
 );
 -- functions and procedures
-drop procedure if exists add_game;
-drop trigger if exists update_player_stats;
 DELIMITER $$
-create procedure add_game(IN start_time datetime,
+drop procedure if exists add_game$$
+create procedure add_game(
+    IN start_time datetime,
     IN end_time datetime,
     IN winner_id BIGINT,
-    IN loser_id BIGINT)
-    BEGIN
+    IN loser_id BIGINT
+    )BEGIN
     DECLARE game_id bigint;
     INSERT INTO games (start_time, end_time) values(start_time, end_time);
     select LAST_INSERT_ID() into game_id ;
@@ -72,7 +72,7 @@ create procedure add_game(IN start_time datetime,
     insert into participants values(
             game_id, loser_id, 'L', 0);
     END$$
-
+drop trigger if exists update_player_stats$$
 create trigger update_plater_stats AFTER INSERT 
 ON participants FOR EACH ROW
 BEGIN
@@ -93,6 +93,52 @@ BEGIN
     SET no_games=no_games+1
     where user_id=NEW.user_id; 
 END$$
+
+drop procedure if exists add_login_event$$
+create procedure add_login_event(
+    IN system_name VARCHAR(40),
+    IN system_version VARCHAR(10),
+    IN ip_address VARCHAR(15),
+    IN user_id BIGINT
+)BEGIN
+INSERT INTO logins_history
+VALUES(
+    system_name,
+    system_version,
+    ip_address,
+    user_id,
+    NOW()
+);
+END$$
+
+drop trigger if exists new_ip$$
+create trigger new_ip BEFORE UPDATE
+ON logins_history FOR EACH ROW
+BEGIN
+    DECLARE ip_exists BOOL;
+    SELECT IF(COUNT(*)>0,1,0) FROM ip_addresses 
+    WHERE ip_address=NEW.ip_address into ip_exists;
+    IF ip_exists=0 THEN 
+    INSERT INTO ip_addresses values(NEW.ip_address);
+    END IF;
+END$$
+
+drop trigger if exists new_os$$
+create trigger new_os BEFORE UPDATE
+ON logins_history FOR EACH ROW
+BEGIN
+    DECLARE os_exists BOOL;
+    SELECT IF(COUNT(*)>0,1,0) FROM operating_systems 
+    WHERE name=NEW.operating_system and 
+    version=NEW.system_version into os_exists;
+    IF os_exists=0 THEN 
+    INSERT INTO operating_ststems 
+    values(NEW.operating_system,NEW.system_version);
+    END IF;
+END$$
+
+
+drop trigger if exists two_games_achivement$$
 create trigger two_games_achivement AFTER UPDATE
 ON users FOR EACH ROW
 BEGIN
