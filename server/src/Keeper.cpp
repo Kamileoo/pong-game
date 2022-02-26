@@ -13,9 +13,8 @@ Keeper::Keeper()
 
 void Keeper::createListener(int listenerPort)
 {
-	std::cout<<"Starting server...\n";
-	int server_socket_descriptor;
-    int connectionDescriptor;
+    std::cout<<"Starting server...\n";
+    int server_socket_descriptor;
     int bind_result;
     int listen_result;
     char reuse_addr_val = 1;
@@ -48,30 +47,43 @@ void Keeper::createListener(int listenerPort)
         printf("Error during resizing queue.\n");
         exit(1);
     }
-	this->listenerFD=server_socket_descriptor;
+    this->listenerFD=server_socket_descriptor;
 }
 
-void Keeper::startListen(){
-	int connectionDescriptor=-1;
-	std::cout<<"Waiting for connection...\n";
-	while(1)
-   {
-       connectionDescriptor = accept(this->listenerFD, NULL, NULL);
-       if (connectionDescriptor < 0)
-       {
-           fprintf(stderr, "Błąd przy próbie utworzenia gniazda dla połączenia.\n");
-           exit(1);
-       }
-       this->handleConnection(connectionDescriptor);
-   }
+void Keeper::startListen()
+{
+    int connectionDescriptor=-1;
+    std::cout<<"Waiting for connection...\n";
+    while(1)
+    {
+        connectionDescriptor = accept(this->listenerFD, NULL, NULL);
+        if (connectionDescriptor < 0)
+        {
+            fprintf(stderr, "Błąd przy próbie utworzenia gniazda dla połączenia.\n");
+            exit(1);
+        }
+        this->handleConnection(connectionDescriptor);
+    }
 
-   close(this->listenerFD);
+    close(this->listenerFD);
 
+}
+void Keeper::removeFinishedGames()
+{
+    for(int i=games.size()-1; i>=0 && !games.empty(); i--)
+    {
+        std::cout<<games.size()<<endl;
+        std::cout<<i<<endl;
+        if(games[i]->finished()){
+        games.erase(games.begin()+i);
+        }
+    }
 }
 
 void Keeper::handleConnection(int connectionDescriptor)
 {
     std::cout<<"New connection is handled...\n";
+    removeFinishedGames();
     bool connectionServed=false;
     //Try to add player to existing game
     for(auto &game:this->games)
