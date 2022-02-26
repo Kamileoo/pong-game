@@ -2,3 +2,4 @@ Pong/__pycache__
 server/bin
 server/obj
 server/server.*
+.idea
