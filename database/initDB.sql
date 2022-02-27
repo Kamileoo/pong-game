@@ -6,6 +6,9 @@ CREATE TABLE achivements (
     name VARCHAR(30) PRIMARY KEY,
     -- url to picture
     badge VARCHAR(120));
+CREATE TABLE guilds(
+    name varchar(30) PRIMARY KEY
+);
 CREATE TABLE users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(320) NOT NULL,
@@ -16,7 +19,8 @@ CREATE TABLE users (
     no_games BIGINT DEFAULT 0,
     no_wins BIGINT DEFAULT 0,
     no_loses BIGINT DEFAULT 0,
-    no_ties BIGINT DEFAULT 0);
+    no_ties BIGINT DEFAULT 0,
+    guild varchar(30) REFERENCES guilds(name));
 CREATE TABLE got_achivements (
     achivement_name VARCHAR(30) REFERENCES achivements(name) ON DELETE CASCADE,
     user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
@@ -40,9 +44,7 @@ CREATE TABLE logins_history(
     logout_time DATETIME NOT NULL,
     PRIMARY KEY(operating_system, system_version, ip_address, user_id)
 );
-CREATE TABLE guilds(
-    name varchar(30) PRIMARY KEY
-);
+
 CREATE TABLE games(
     game_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     start_time datetime NOT NULL,
