@@ -20,7 +20,8 @@ CREATE TABLE users (
     no_wins BIGINT DEFAULT 0,
     no_loses BIGINT DEFAULT 0,
     no_ties BIGINT DEFAULT 0,
-    guild varchar(30) REFERENCES guilds(name));
+    guild varchar(30) NULL,
+    FOREIGN KEY (guild) REFERENCES guilds(name) ON DELETE SET NULL ON UPDATE CASCADE);
 CREATE TABLE got_achivements (
     achivement_name VARCHAR(30) REFERENCES achivements(name) ON DELETE CASCADE,
     user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
