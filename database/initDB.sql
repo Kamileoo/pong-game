@@ -43,7 +43,7 @@ CREATE TABLE logins_history(
     user_id BIGINT REFERENCES users(user_id),
     login_time DATETIME NOT NULL,
     logout_time DATETIME NOT NULL,
-    PRIMARY KEY(operating_system, system_version, ip_address, user_id)
+    PRIMARY KEY(operating_system, system_version, ip_address, user_id, logout_time)
 );
 
 CREATE TABLE games(
