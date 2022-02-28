@@ -1,6 +1,8 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import config
+import glob_func
 import hub
+import bcrypt
 
 account_widget = {
     'userlabel': [],
@@ -22,43 +24,133 @@ account_widget = {
 
 
 def username_change():
-    print(account_widget['username'][-1].text())
-    show_info('testting', 'green')
-    refresh_user()
+    change_info()
+    new_user = account_widget['username'][-1].text()
+
+    if config.login_params['username'] == new_user:
+        change_info('Username is the same!', 'red')
+        return
+
+    try:
+        query = f"SELECT * FROM users WHERE nick='{str(new_user)}'"
+        dbdata = glob_func.get_from_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    if dbdata:
+        change_info('Username is already taken!', 'red')
+        return
+
+    try:
+        query = f"UPDATE users SET nick='{str(new_user)}' WHERE user_id='{str(config.login_params['userID'])}'"
+        glob_func.insert_into_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    change_info('Username changed!', 'green')
+    config.login_params['username'] = new_user
+    account_widget['userlabel'][-1].setText(config.login_params['username'])
 
 
 def mail_change():
-    print(account_widget['mail'][-1].text())
-    show_info('Reddddddd', 'red')
+    change_info()
+    new_email = account_widget['mail'][-1].text()
+
+    if config.login_params['email'] == new_email:
+        change_info('E-mail is the same!', 'red')
+        return
+
+    try:
+        query = f"SELECT * FROM users WHERE email='{str(new_email)}'"
+        dbdata = glob_func.get_from_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    if dbdata:
+        change_info('E-mail is already taken!', 'red')
+        return
+
+    try:
+        query = f"UPDATE users SET email='{str(new_email)}' WHERE user_id='{str(config.login_params['userID'])}'"
+        glob_func.insert_into_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    change_info('E-mail changed!', 'green')
+    config.login_params['email'] = new_email
 
 
 def password_change():
-    print(account_widget['password'][-1].text())
-    print(account_widget['password2'][-1].text())
+    change_info()
+    pas1 = account_widget['password'][-1].text()
+    pas2 = account_widget['password2'][-1].text()
+
+    if pas1 == '' or pas2 == '':
+        change_info('Enter correct data!', 'red')
+        return
+
+    if pas1 != pas2:
+        change_info('Passwords are not the same!', 'red')
+        return
+
+    try:
+        query = f"SELECT password FROM users WHERE user_id='{str(config.login_params['userID'])}'"
+        dbdata = glob_func.get_from_db(query)
+        dbdata = dbdata[0][0]
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    if bcrypt.checkpw(pas1.encode('utf-8'), dbdata.encode('utf-8')):
+        change_info('Old and new passwords are the same!', 'red')
+        return
+
+    hash_pas = bcrypt.hashpw(pas1.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    try:
+        query = f"UPDATE users SET password='{str(hash_pas)}' WHERE user_id='{str(config.login_params['userID'])}'"
+        glob_func.insert_into_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    change_info('Password changed!', 'green')
+    config.login_params['password'] = hash_pas
 
 
-def to_hub():
-    account_clear()
-    hub.hub_ui(config.window)
-
-
-def show_info(text, color):
+def change_info(text='', color='black'):
     account_widget['info'][-1].show()
     account_widget['info'][-1].setText(text)
     account_widget['info'][-1].setStyleSheet(f"color: {color};")
 
 
-def hide_info():
-    account_widget['info'][-1].show()
-    account_widget['info'][-1].setText('')
+def line_edit_account(text, func, tab, tab_name):
+    le = QtWidgets.QLineEdit()
+    #le.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    le.setText(text)
+    le.setMaximumWidth(config.glob_params['windows_width'] / 3)
+    le.returnPressed.connect(func)
+    # le.setStyleSheet(
+    #     "margin: 0 380px;"
+    # )
+    tab[tab_name].append(le)
+    tab[tab_name][-1].show()
+    return tab[tab_name][-1]
 
 
-def refresh_user():
-    account_widget['userlabel'][-1].setText(config.login_params['username'])
+def label_account(text, align, tab, tab_name):
+    label = QtWidgets.QLabel(text)
+    label.setAlignment(align)
+    tab[tab_name].append(label)
+    tab[tab_name][-1].show()
+    return tab[tab_name][-1]
 
 
-def draw():
-    account_clear()
+def account_ui():
 
     # User and Guild
     us = QtWidgets.QLabel(config.login_params['username'])
@@ -74,112 +166,55 @@ def draw():
     config.glob_grid.addWidget(account_widget['guildlabel'][-1], 1, 2, QtCore.Qt.AlignmentFlag.AlignCenter)
 
     # Info
-    inf = QtWidgets.QLabel('')
-    inf.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
-    account_widget['info'].append(inf)
-    account_widget['info'][-1].show()
-    config.glob_grid.addWidget(account_widget['info'][-1], 3, 1, 1, 2, QtCore.Qt.AlignmentFlag.AlignLeft)
+    infl = label_account('', QtCore.Qt.AlignmentFlag.AlignLeft, account_widget, 'info')
+    config.glob_grid.addWidget(infl, 3, 1, 1, 2, QtCore.Qt.AlignmentFlag.AlignLeft)
 
     # Username
-    userl = QtWidgets.QLabel('Username:')
-    userl.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-    account_widget['usernamelabel'].append(userl)
-    account_widget['usernamelabel'][-1].show()
-    config.glob_grid.addWidget(account_widget['usernamelabel'][-1], 4, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+    userl = label_account('Username:', QtCore.Qt.AlignmentFlag.AlignRight, account_widget, 'usernamelabel')
+    config.glob_grid.addWidget(userl, 4, 0, QtCore.Qt.AlignmentFlag.AlignRight)
 
-    userbox = QtWidgets.QLineEdit(config.window)
-    #userbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    userbox.setText(config.login_params['username'])
-    userbox.setMaximumWidth(config.glob_params['windows_width'] / 3 - 15)
-    account_widget['username'].append(userbox)
-    account_widget['username'][-1].show()
-    config.glob_grid.addWidget(account_widget['username'][-1], 4, 1)
+    userle = line_edit_account(config.login_params['username'], username_change, account_widget, 'username')
+    userle.setMaxLength(20)
+    config.glob_grid.addWidget(userle, 4, 1)
 
-    usern = QtWidgets.QPushButton("Save")
-    usern.clicked.connect(username_change)
-    account_widget['usernamebutton'].append(usern)
-    account_widget['usernamebutton'][-1].show()
-    config.glob_grid.addWidget(account_widget['usernamebutton'][-1], 4, 2, QtCore.Qt.AlignmentFlag.AlignLeft)
+    userb = glob_func.button_main('Save', username_change, account_widget, 'usernamebutton')
+    config.glob_grid.addWidget(userb, 4, 2, QtCore.Qt.AlignmentFlag.AlignLeft)
 
     # Mail
-    maill = QtWidgets.QLabel('E-mail:')
-    maill.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-    account_widget['maillabel'].append(maill)
-    account_widget['maillabel'][-1].show()
-    config.glob_grid.addWidget(account_widget['maillabel'][-1], 5, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+    maill = label_account('E-mail:', QtCore.Qt.AlignmentFlag.AlignRight, account_widget, 'maillabel')
+    config.glob_grid.addWidget(maill, 5, 0, QtCore.Qt.AlignmentFlag.AlignRight)
 
-    mailbox = QtWidgets.QLineEdit(config.window)
-    # mailbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    mailbox.setText(config.login_params['email'])
-    mailbox.setMaximumWidth(config.glob_params['windows_width'] / 3 - 15)
-    account_widget['mail'].append(mailbox)
-    account_widget['mail'][-1].show()
-    config.glob_grid.addWidget(account_widget['mail'][-1], 5, 1)
+    maille = line_edit_account(config.login_params['email'], mail_change, account_widget, 'mail')
+    maille.setMaxLength(256)
+    config.glob_grid.addWidget(maille, 5, 1)
 
-    mailb = QtWidgets.QPushButton("Save")
-    mailb.clicked.connect(mail_change)
-    account_widget['mailbutton'].append(mailb)
-    account_widget['mailbutton'][-1].show()
-    config.glob_grid.addWidget(account_widget['mailbutton'][-1], 5, 2, QtCore.Qt.AlignmentFlag.AlignLeft)
+    mailb = glob_func.button_main('Save', mail_change, account_widget, 'mailbutton')
+    config.glob_grid.addWidget(mailb, 5, 2, QtCore.Qt.AlignmentFlag.AlignLeft)
 
     # Password
-    passl = QtWidgets.QLabel('Password:')
-    passl.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-    account_widget['passwordlabel'].append(passl)
-    account_widget['passwordlabel'][-1].show()
-    config.glob_grid.addWidget(account_widget['passwordlabel'][-1], 6, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+    pasl = label_account('Password:', QtCore.Qt.AlignmentFlag.AlignRight, account_widget, 'passwordlabel')
+    config.glob_grid.addWidget(pasl, 6, 0, QtCore.Qt.AlignmentFlag.AlignRight)
 
-    passbox = QtWidgets.QLineEdit(config.window)
-    # passbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    passbox.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
-    passbox.setMaximumWidth(config.glob_params['windows_width'] / 3 - 15)
-    account_widget['password'].append(passbox)
-    account_widget['password'][-1].show()
-    config.glob_grid.addWidget(account_widget['password'][-1], 6, 1)
+    pasle = line_edit_account('', password_change, account_widget, 'password')
+    pasle.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+    pasle.setMaxLength(40)
+    config.glob_grid.addWidget(pasle, 6, 1)
 
-    pass2l = QtWidgets.QLabel('Repeat password:')
-    pass2l.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-    account_widget['password2label'].append(pass2l)
-    account_widget['password2label'][-1].show()
-    config.glob_grid.addWidget(account_widget['password2label'][-1], 7, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+    pas2l = label_account('Repeat password:', QtCore.Qt.AlignmentFlag.AlignRight, account_widget, 'password2label')
+    config.glob_grid.addWidget(pas2l, 7, 0, QtCore.Qt.AlignmentFlag.AlignRight)
 
-    pass2box = QtWidgets.QLineEdit(config.window)
-    # pass2box.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    pass2box.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
-    pass2box.setMaximumWidth(config.glob_params['windows_width'] / 3 - 15)
-    account_widget['password2'].append(pass2box)
-    account_widget['password2'][-1].show()
-    config.glob_grid.addWidget(account_widget['password2'][-1], 7, 1)
+    pas2le = line_edit_account('', password_change, account_widget, 'password2')
+    pas2le.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+    pas2le.setMaxLength(40)
+    config.glob_grid.addWidget(pas2le, 7, 1)
 
-    passb = QtWidgets.QPushButton("Save")
-    passb.clicked.connect(password_change)
-    account_widget['passwordbutton'].append(passb)
-    account_widget['passwordbutton'][-1].show()
-    config.glob_grid.addWidget(account_widget['passwordbutton'][-1], 6, 2, 2, 1, QtCore.Qt.AlignmentFlag.AlignLeft)
+    pasb = glob_func.button_main('Save', password_change, account_widget, 'passwordbutton')
+    config.glob_grid.addWidget(pasb, 6, 2, 2, 1, QtCore.Qt.AlignmentFlag.AlignLeft)
 
     # Back button
-    back = QtWidgets.QPushButton("Back")
-    back.clicked.connect(to_hub)
-    account_widget['back'].append(back)
-    account_widget['back'][-1].show()
-    config.glob_grid.addWidget(account_widget['back'][-1], 9, 2, QtCore.Qt.AlignmentFlag.AlignCenter)
-
+    backb = glob_func.button_main('Back', lambda: glob_func.go_to(account_widget, hub.hub_ui), account_widget, 'back')
+    config.glob_grid.addWidget(backb, 9, 2, QtCore.Qt.AlignmentFlag.AlignCenter)
 
     config.glob_grid.setRowStretch(2, 1)
     config.glob_grid.setRowStretch(8, 1)
     config.glob_grid.setRowStretch(10, 1)
-
-
-def account_clear():
-    for h in account_widget:
-        if account_widget[h] != []:
-            account_widget[h][-1].deleteLater()
-        for i in range(len(account_widget[h])):
-            account_widget[h] = []
-    config.glob_grid.setRowStretch(2, 0)
-    config.glob_grid.setRowStretch(8, 0)
-    config.glob_grid.setRowStretch(10, 0)
-
-
-def account_ui():
-    draw()

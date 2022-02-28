@@ -57,7 +57,7 @@ def is_ready():
 # When Press End
 def is_end(win):
     game_clear(win)
-    hub.hub_ui(win)
+    hub.hub_ui()
 
 
 # After the Game Ends
@@ -159,9 +159,10 @@ def game():
 
 
 # Drawing and setting the window
-def game_ui(win):
+def game_ui(win=config.window):
     imagine()
 
+    win = config.window
     win.setStyleSheet("background-color: #363636;")
 
     # Dotted line

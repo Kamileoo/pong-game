@@ -1,8 +1,9 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import sys
+
+import glob_func
 import mylogin
 import game
-import hub
 import config
 
 
@@ -16,6 +17,9 @@ class MyWindow(QtWidgets.QWidget):
     def keyReleaseEvent(self, event):
         if game.game_val['is_game']:
             game.keyHandler(event, 'R')
+
+    def closeEvent(self, event):
+        if config.login_datetime is not None: glob_func.logout_func()
 
 
 if len(sys.argv)<3:
@@ -31,7 +35,6 @@ win.setFixedSize(1024, 512)
 config.window = win
 config.glob_grid = QtWidgets.QGridLayout(config.window)
 
-#hub.hub_ui(win)
 mylogin.login_ui()
 
 win.show()

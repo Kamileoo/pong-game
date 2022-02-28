@@ -1,3 +1,5 @@
+from datetime import datetime
+
 glob_params = {
     'windows_height': 512,
     'windows_width': 1024,
@@ -6,20 +8,30 @@ glob_params = {
 }
 
 login_params = {
-    'username': 'Tester',
-    'password': 'tets@gmail.com',
-    'password2': '',
-    'email': '',
-    'guild': 'My Guild',
-    'isAdmin': 1
+    'userID': None,
+    'username': None,
+    'password': None,
+    'email': None,
+    'guild': None,
+    'isAdmin': 0
 }
 
 db_params = {
-    'host': '',
-    'database': '',
-    'user': '',
-    'password': ''
+    'host': 'localhost',
+    'database': 'pong',
+    'user': 'root',
+    'password': 'qwerty123'
 }
+
+login_datetime = None
+
+boxes_header = "font: bold 20px;"
+
+table_header = "font: bold 20px;"
+
+account_buttons = "margin: 0px 80px;"
+
+login_buttons = "margin: 0 420px;"
 
 glob_grid = None
 

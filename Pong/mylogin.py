@@ -1,6 +1,9 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import config
+import glob_func
 import hub
+import bcrypt
+from datetime import datetime
 
 login_widget = {
     'login': [],
@@ -14,185 +17,207 @@ login_widget = {
 }
 
 
-def flogin():
-    print(login_widget['username'][-1].text())
-    print(login_widget['password'][-1].text())
-    login_clear()
-    hub.hub_ui(config.window)
-    pass
+def login_func():
+    change_info()
+    user = login_widget['username'][-1].text()
+    pas = login_widget['password'][-1].text()
+
+    if user == '' or pas == '':
+        change_info('Enter correct data!', 'red')
+        return
+
+    try:
+        query = f"SELECT user_id, password, admin, email, guild FROM users WHERE nick = convert('{str(user)}' using utf8mb4) collate utf8mb4_bin"
+        dbdata = glob_func.get_from_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    if not dbdata:
+        change_info('User does not exist!', 'red')
+        return
+    else:
+        id, dbpass, isAdmin, email, guild = dbdata[0]
+
+    if bcrypt.checkpw(pas.encode('utf-8'),dbpass.encode('utf-8')):
+        config.login_params['userID'] = id
+        config.login_params['username'] = user
+        config.login_params['password'] = dbpass
+        config.login_params['email'] = email
+        config.login_params['guild'] = guild if guild else None
+        config.login_params['isAdmin'] = isAdmin
+
+        glob_func.grid_clear(login_widget)
+        config.login_datetime = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        hub.hub_ui()
+    else:
+        change_info('Incorrect password!', 'red')
+        return
 
 
-def fsignin():
-    print(login_widget['username'][-1].text())
-    print(login_widget['password'][-1].text())
-    print(login_widget['password2'][-1].text())
-    print(login_widget['mail'][-1].text())
-    show_info('test', 'yellow')
-    #login_clear()
-    #hub.hub_ui(config.window)
-    pass
+def signin_func():
+    change_info()
+    user = login_widget['username'][-1].text()
+    pas1 = login_widget['password'][-1].text()
+    pas2 = login_widget['password2'][-1].text()
+    email = login_widget['mail'][-1].text()
+
+    # Poprawność danych
+    if user == '' or pas1 == '' or pas2 == '' or email == '':
+        change_info('Enter correct data!', 'red')
+        return
+
+    # Sprawdzenie obecności w bazie
+    try:
+        query = f"SELECT nick, email FROM users WHERE nick = '{str(user)}' OR email='{str(email)}'"
+        dbdata = glob_func.get_from_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    # Jeżeli istnieje
+    if len(dbdata) == 2:
+        change_info('Username and email are already taken!', 'red')
+        return
+    elif len(dbdata) == 1:
+        if dbdata[0][0] == user and dbdata[0][1] == email:
+            change_info('Username and email are already taken!', 'red')
+            return
+        elif dbdata[0][0] == user:
+            change_info('Username is already taken!', 'red')
+            return
+        else:
+            change_info('Email already used!', 'red')
+            return
+
+    # Poprawność haseł
+    if pas1 != pas2:
+        change_info('Passwords are different!', 'red')
+        return
+
+    # Wpisywanie do bazy
+    hashPas = bcrypt.hashpw(pas1.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    try:
+        query = f"INSERT INTO users(email, nick, password) VALUES ('{str(email)}','{str(user)}','{str(hashPas)}')"
+        glob_func.insert_into_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    # Odbieranie danych z bazy
+    try:
+        query = f"SELECT user_id, password, admin, email FROM users WHERE nick = convert('{str(user)}' using utf8mb4) collate utf8mb4_bin"
+        dbdata = glob_func.get_from_db(query)
+    except:
+        change_info('Error during connection with DB', 'red')
+        return
+
+    if not dbdata:
+        change_info('Error during adding a user', 'red')
+        return
+    else:
+        id, dbpass, isAdmin, email = dbdata[0]
+
+    config.login_params['userID'] = id
+    config.login_params['username'] = user
+    config.login_params['password'] = dbpass
+    config.login_params['email'] = email
+    config.login_params['guild'] = None
+    config.login_params['isAdmin'] = isAdmin
+
+    glob_func.grid_clear(login_widget)
+    config.login_datetime = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+    hub.hub_ui()
 
 
-def show_info(text, color):
+def change_info(text='', color='black'):
     login_widget['info'][-1].show()
     login_widget['info'][-1].setText(text)
     login_widget['info'][-1].setStyleSheet(f"color: {color};")
 
 
-def hide_info():
-    login_widget['info'][-1].show()
-    login_widget['info'][-1].setText('')
-
-
-def draw_login():
-    login_clear()
-
-    #config.glob_grid.setRowStretch(0, 1)
-    #config.glob_grid.setRowStretch(5, 1)
-
-    inf = QtWidgets.QLabel('')
-    inf.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    login_widget['info'].append(inf)
-    login_widget['info'][-1].show()
-    #login_widget['info'][-1].setText('')
-    config.glob_grid.addWidget(login_widget['info'][-1], 1, 0, QtCore.Qt.AlignmentFlag.AlignTop)
-
-    logf = QtWidgets.QLineEdit(config.window)
-    logf.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    logf.setPlaceholderText("Username")
-    logf.returnPressed.connect(flogin)
-    logf.setStyleSheet(
+def line_edit_login(text, func, tab, tab_name):
+    le = QtWidgets.QLineEdit()
+    le.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    le.setPlaceholderText(text)
+    le.returnPressed.connect(func)
+    le.setStyleSheet(
         "margin: 0 380px;"
     )
-    login_widget['username'].append(logf)
-    login_widget['username'][-1].show()
-    config.glob_grid.addWidget(login_widget['username'][-1], 2, 0)
-
-    logf2 = QtWidgets.QLineEdit(config.window)
-    logf2.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    logf2.setPlaceholderText("Password")
-    logf2.returnPressed.connect(flogin)
-    logf2.setStyleSheet(
-        "margin: 0 380px;"
-    )
-    login_widget['password'].append(logf2)
-    login_widget['password'][-1].show()
-    config.glob_grid.addWidget(login_widget['password'][-1], 3, 0)
-
-    loginb = create_login_button("Login")
-    loginb.clicked.connect(flogin)
-    login_widget['login'].append(loginb)
-    login_widget['login'][-1].show()
-    config.glob_grid.addWidget(login_widget['login'][-1], 4, 0)
-
-    signinb = create_login_button("Sign in")
-    signinb.clicked.connect(draw_signin)
-    login_widget['signin'].append(signinb)
-    login_widget['signin'][-1].show()
-    config.glob_grid.addWidget(login_widget['signin'][-1], 5, 0)
-
-    config.glob_grid.setRowStretch(0, 1)
-    config.glob_grid.setRowStretch(6, 1)
+    tab[tab_name].append(le)
+    tab[tab_name][-1].show()
+    return tab[tab_name][-1]
 
 
-def draw_signin():
-    login_clear()
-    #login_widget['grid'][-1] = QtWidgets.QGridLayout()
-
+def login_ui():
     # Info
     inf = QtWidgets.QLabel('')
     inf.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     login_widget['info'].append(inf)
     login_widget['info'][-1].show()
-    # login_widget['info'][-1].setText('')
+    config.glob_grid.addWidget(login_widget['info'][-1], 1, 0)
+
+    # Username
+    logle = line_edit_login('Username', login_func, login_widget, 'username')
+    logle.setMaxLength(20)
+    config.glob_grid.addWidget(logle, 2, 0)
+
+    # Password
+    pasle = line_edit_login('Password', login_func, login_widget, 'password')
+    pasle.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+    pasle.setMaxLength(40)
+    config.glob_grid.addWidget(pasle, 3, 0)
+
+    # Login button
+    logb = glob_func.button_main('Login', login_func, login_widget, 'login', config.login_buttons)
+    config.glob_grid.addWidget(logb, 4, 0)
+
+    # Sign In button
+    signb = glob_func.button_main('Sign In', lambda: glob_func.go_to(login_widget, signin_ui), login_widget, 'signin', config.login_buttons)
+    config.glob_grid.addWidget(signb, 5, 0)
+
+    config.glob_grid.setRowStretch(0, 1)
+    config.glob_grid.setRowStretch(6, 1)
+
+
+def signin_ui():
+    # Info
+    inf = QtWidgets.QLabel('')
+    inf.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    login_widget['info'].append(inf)
+    login_widget['info'][-1].show()
     config.glob_grid.addWidget(login_widget['info'][-1], 1, 0, QtCore.Qt.AlignmentFlag.AlignTop)
 
     # Username
-    logf = QtWidgets.QLineEdit(config.window)
-    logf.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    logf.setPlaceholderText("Username")
-    logf.returnPressed.connect(fsignin)
-    logf.setStyleSheet(
-        "margin: 0 380px;"
-    )
-    login_widget['username'].append(logf)
-    login_widget['username'][-1].show()
-    config.glob_grid.addWidget(login_widget['username'][-1], 2, 0)
+    logle = line_edit_login('Username', signin_func, login_widget, 'username')
+    logle.setMaxLength(20)
+    config.glob_grid.addWidget(logle, 2, 0)
 
     # Password
-    logf2 = QtWidgets.QLineEdit(config.window)
-    logf2.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    logf2.setPlaceholderText("Password")
-    logf2.returnPressed.connect(fsignin)
-    logf2.setStyleSheet(
-        "margin: 0 380px;"
-    )
-    login_widget['password'].append(logf2)
-    login_widget['password'][-1].show()
-    config.glob_grid.addWidget(login_widget['password'][-1], 3, 0)
+    pas1le = line_edit_login('Password', signin_func, login_widget, 'password')
+    pas1le.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+    pas1le.setMaxLength(40)
+    config.glob_grid.addWidget(pas1le, 3, 0)
 
     # Password 2
-    logf3 = QtWidgets.QLineEdit(config.window)
-    logf3.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    logf3.setPlaceholderText("Repeat password")
-    logf3.returnPressed.connect(fsignin)
-    logf3.setStyleSheet(
-        "margin: 0 380px;"
-    )
-    login_widget['password2'].append(logf3)
-    login_widget['password2'][-1].show()
-    config.glob_grid.addWidget(login_widget['password2'][-1], 4, 0)
+    pas2le = line_edit_login('Repeat password', signin_func, login_widget, 'password2')
+    pas2le.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+    pas2le.setMaxLength(40)
+    config.glob_grid.addWidget(pas2le, 4, 0)
 
     # Email
-    logf4 = QtWidgets.QLineEdit(config.window)
-    logf4.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-    logf4.setPlaceholderText("Email")
-    logf4.returnPressed.connect(fsignin)
-    logf4.setStyleSheet(
-        "margin: 0 380px;"
-    )
-    login_widget['mail'].append(logf4)
-    login_widget['mail'][-1].show()
-    config.glob_grid.addWidget(login_widget['mail'][-1], 5, 0)
+    emle = line_edit_login('Email', signin_func, login_widget, 'mail')
+    emle.setMaxLength(256)
+    config.glob_grid.addWidget(emle, 5, 0)
 
-    # Sign In
-    signinb = create_login_button("Sign in")
-    signinb.clicked.connect(fsignin)
-    login_widget['signin'].append(signinb)
-    login_widget['signin'][-1].show()
-    config.glob_grid.addWidget(login_widget['signin'][-1], 6, 0)
+    # Sign In button
+    sigb = glob_func.button_main('Sign in', signin_func, login_widget, 'signin', config.login_buttons)
+    config.glob_grid.addWidget(sigb, 6, 0)
 
-    back = create_login_button("Back")
-    back.clicked.connect(draw_login)
-    login_widget['back'].append(back)
-    login_widget['back'][-1].show()
-    config.glob_grid.addWidget(login_widget['back'][-1], 7, 0)
+    # Back button
+    backb = glob_func.button_main('Back', lambda: glob_func.go_to(login_widget, login_ui), login_widget, 'back',
+                                  config.login_buttons)
+    config.glob_grid.addWidget(backb, 7, 0)
 
     config.glob_grid.setRowStretch(0, 1)
     config.glob_grid.setRowStretch(8, 1)
-
-
-
-
-def create_login_button(text):
-    button = QtWidgets.QPushButton(text)
-    button.setStyleSheet(
-        "margin: 0 420px;"
-    )
-
-    return button
-
-
-def login_clear():
-    for h in login_widget:
-        if login_widget[h] != []:
-            login_widget[h][-1].deleteLater()
-        for i in range(len(login_widget[h])):
-            login_widget[h] = []
-    config.glob_grid.setRowStretch(0, 0)
-    config.glob_grid.setRowStretch(6, 0)
-    config.glob_grid.setRowStretch(8, 0)
-
-
-def login_ui():
-    draw_login()

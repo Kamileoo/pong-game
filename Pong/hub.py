@@ -1,8 +1,14 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import game
 import config
+import glob_func
 import account
 import loginHistory
+import mylogin
+import gamesHistory
+import stats
+import achiev
+import guildsList
 
 hub_widget = {
     'startbutton': [],
@@ -13,39 +19,21 @@ hub_widget = {
     'loginhistory': [],
     'gameshistory': [],
     'account': [],
-    'spacers': []
+    'guildlabel': [],
+    'logout': []
 }
-
-def start_game(win):
-    hub_clear()
-    game.game_ui(win)
-
-
-def guilds():
-    pass
-
-
-def achievements():
-    pass
-
-
-def statistics():
-    pass
-
-def gameshistory():
-    pass
-
-
-def loginhistory():
-    hub_clear()
-    loginHistory.lg_ui()
-    pass
-
 
 
 def account_func():
     hub_clear()
-    account.draw()
+    account.account_ui()
+
+
+def logout_func():
+    hub_clear()
+    if config.login_datetime is not None: glob_func.logout_func()
+    config.login_datetime = None
+    mylogin.login_ui()
 
 
 def hub_clear():
@@ -55,8 +43,8 @@ def hub_clear():
         for i in range(len(hub_widget[h])):
             hub_widget[h] = []
     config.glob_grid.setColumnMinimumWidth(0, 0)
-    config.glob_grid.setRowStretch(2, 0)
-    config.glob_grid.setRowStretch(9, 0)
+    config.glob_grid.setRowStretch(4, 0)
+    config.glob_grid.setRowStretch(11, 0)
 
 
 def create_main_button(text):
@@ -69,73 +57,63 @@ def create_main_button(text):
     return button
 
 
-def hub_ui(win):
+def hub_ui(win=config.window):
 
     # Nickname
-    #player = QtWidgets.QLabel("Player")
     player = QtWidgets.QLabel(config.login_params['username'])
-    player.setMaximumHeight(20)
     player.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     hub_widget['player'].append(player)
     hub_widget['player'][-1].show()
     config.glob_grid.addWidget(hub_widget['player'][-1], 0, 2, QtCore.Qt.AlignmentFlag.AlignTop)
 
+    guil = QtWidgets.QLabel(config.login_params['guild'])
+    guil.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+    hub_widget['guildlabel'].append(guil)
+    hub_widget['guildlabel'][-1].show()
+    config.glob_grid.addWidget(hub_widget['guildlabel'][-1], 1, 2, QtCore.Qt.AlignmentFlag.AlignCenter)
+
     # Account
-    acc = QtWidgets.QPushButton("Account")
-    acc.setStyleSheet(
-        "margin: 0px 80px;"
-    )
-    acc.clicked.connect(account_func)
-    hub_widget['account'].append(acc)
-    hub_widget['account'][-1].show()
-    config.glob_grid.addWidget(hub_widget['account'][-1], 1, 2)
+    acc = glob_func.button_main('Account', lambda: glob_func.go_to(hub_widget, account.account_ui), hub_widget,
+                                'account', config.account_buttons)
+    config.glob_grid.addWidget(acc, 2, 2)
+
+    # LogOut
+    logout = glob_func.button_main('Logout', logout_func, hub_widget,
+                                   'logout', config.account_buttons)
+    config.glob_grid.addWidget(logout, 3, 2)
 
     # Game start
-    startb = create_main_button("Start")
-    startb.clicked.connect(lambda: start_game(win))
-    hub_widget['startbutton'].append(startb)
-    hub_widget['startbutton'][-1].show()
-    config.glob_grid.addWidget(hub_widget['startbutton'][-1], 3, 1)
+    startb = glob_func.button_main('Start', lambda: glob_func.go_to(hub_widget, game.game_ui), hub_widget,
+                                    'startbutton')
+    config.glob_grid.addWidget(startb, 5, 1)
 
     # Guilds
-    gul = create_main_button("Guilds")
-    gul.clicked.connect(guilds)
-    hub_widget['guilds'].append(gul)
-    hub_widget['guilds'][-1].show()
-    config.glob_grid.addWidget(hub_widget['guilds'][-1], 4, 1)
+    gul = glob_func.button_main('Guilds', lambda: glob_func.go_to(hub_widget, guildsList.guild_ui), hub_widget,
+                                'guilds')
+    config.glob_grid.addWidget(gul, 6, 1)
 
     # Achievements
-    ach = create_main_button("Achievements")
-    ach.clicked.connect(achievements)
-    hub_widget['achievements'].append(ach)
-    hub_widget['achievements'][-1].show()
-    config.glob_grid.addWidget(hub_widget['achievements'][-1], 5, 1)
+    ach = glob_func.button_main('Achievements', lambda: glob_func.go_to(hub_widget, achiev.ach_ui), hub_widget,
+                                'achievements')
+    config.glob_grid.addWidget(ach, 7, 1)
 
     # Statistics
-    stat = create_main_button("Statistics")
-    stat.clicked.connect(statistics)
-    hub_widget['statistics'].append(stat)
-    hub_widget['statistics'][-1].show()
+    stat = glob_func.button_main('Statistics', lambda: glob_func.go_to(hub_widget, stats.stat_ui), hub_widget,
+                                 'statistics')
+    config.glob_grid.addWidget(stat, 8, 1)
 
-    config.glob_grid.addWidget(hub_widget['statistics'][-1], 6, 1)
     # Games History
-    gam = create_main_button("Games History")
-    gam.clicked.connect(gameshistory)
-    hub_widget['gameshistory'].append(gam)
-    hub_widget['gameshistory'][-1].show()
-    config.glob_grid.addWidget(hub_widget['gameshistory'][-1], 7, 1)
+    gam = glob_func.button_main('Games history', lambda: glob_func.go_to(hub_widget, gamesHistory.gh_ui), hub_widget,
+                                'gameshistory')
+    config.glob_grid.addWidget(gam, 9, 1)
 
     # Login History
-    log = create_main_button("Login History")
-    log.clicked.connect(loginhistory)
-    hub_widget['loginhistory'].append(log)
-    if config.login_params['isAdmin']:
-        hub_widget['loginhistory'][-1].show()
-    else:
-        hub_widget['loginhistory'][-1].hide()
-    config.glob_grid.addWidget(hub_widget['loginhistory'][-1], 8, 1)
+    log = glob_func.button_main('Login history', lambda: glob_func.go_to(hub_widget, loginHistory.lg_ui), hub_widget,
+                                'loginhistory')
+    if not config.login_params['isAdmin']: log.hide()
+    config.glob_grid.addWidget(log, 10, 1)
 
     # Spacers
     config.glob_grid.setColumnMinimumWidth(0,config.glob_params['windows_width']/3)
-    config.glob_grid.setRowStretch(2, 1)
-    config.glob_grid.setRowStretch(9, 1)
+    config.glob_grid.setRowStretch(4, 1)
+    config.glob_grid.setRowStretch(11, 2)
