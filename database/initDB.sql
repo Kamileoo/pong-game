@@ -7,7 +7,8 @@ CREATE TABLE achivements (
     -- url to picture
     badge VARCHAR(120));
 CREATE TABLE guilds(
-    name varchar(30) PRIMARY KEY
+    name varchar(30) PRIMARY KEY,
+    password CHAR(72),
 );
 CREATE TABLE users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
