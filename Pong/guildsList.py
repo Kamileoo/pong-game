@@ -263,22 +263,6 @@ def leave_func():
         print('Error')
         return
 
-    try:
-        query = f"SELECT nick FROM users WHERE guild='{str(config.login_params['guild'])}'"
-        am = glob_func.get_from_db(query)
-
-    except:
-        print('Error')
-        return
-
-    if len(am)<1:
-        try:
-            query = f"DELETE FROM guilds WHERE name='{str(config.login_params['guild'])}'"
-            glob_func.insert_into_db(query)
-        except:
-            print('ERROR')
-            return
-
     config.login_params['guild']=None
     glob_func.grid_clear(guild_widget)
     guild_ui()
@@ -393,13 +377,13 @@ def change_func():
     new_win['grid'][-1].addWidget(gp, 4, 0, 1, 2)
 
     # Info
-    inf2 = QtWidgets.QLabel('Jeśli nie podasz hasła, to się nie zmieni')
+    inf2 = QtWidgets.QLabel('Leave password empty to not change it')
     inf2.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
     new_win['info2'].append(inf2)
     new_win['info2'][-1].show()
     new_win['grid'][-1].addWidget(new_win['info2'][-1], 5, 0, 1, 2)
 
-    sv = glob_func.button_main('Join', change_button, new_win, 'save')
+    sv = glob_func.button_main('Save', change_button, new_win, 'save')
     new_win['grid'][-1].addWidget(sv, 6, 1)
 
     cl = glob_func.button_main('Cancel', new_win['new_window'][-1].close, new_win, 'cancel')
@@ -424,6 +408,7 @@ def del_func():
         print('ERROR')
         return
 
+    if gname == config.login_params['guild']: config.login_params['guild'] = None
     glob_func.grid_clear(guild_widget)
     guild_ui()
 

@@ -11,9 +11,9 @@ class MyGame(QtCore.QObject):
 
     def run(self):
         print("RUN")
-        my_id=2
+        my_id=config.login_params['userID']
         socket = QTcpSocket()
-        socket.connected.connect(lambda: print("POlączono z serwerem"))
+        socket.connected.connect(lambda: print("Polączono z serwerem"))
         socket.disconnected.connect(lambda: print("Disconnected"))
         ip=config.glob_params['ip']
         port=int(config.glob_params['port'])
@@ -67,11 +67,7 @@ class MyGame(QtCore.QObject):
             winner_id=players_ids[0] if players_ids[1]==my_id else players_ids[1]
             end_datetime = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
             try:
-                connection = mysql.connector.connect(
-                    user='user',
-                    host='192.168.0.12',
-                    password='123',
-                    database='pong')
+                connection = mysql.connector.connect(**config.db_params)
                 cur = connection.cursor()
                 val = (start_datetime, end_datetime, my_id, winner_id)
                 cur.callproc('add_game', val)

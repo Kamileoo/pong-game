@@ -62,6 +62,12 @@ def is_end(win):
 
 # After the Game Ends
 def game_is_over():
+    # game_widget['myscore'][-1].setText(str(game_val['my_score']))
+    # game_widget['myscore'][-1].show()
+    #
+    # game_widget['enscore'][-1].setText(str(game_val['en_score']))
+    # game_widget['enscore'][-1].show()
+
     game_val['is_game'] = 0
     game_widget['central_line'][-1].hide()
     game_widget['endbutton'][-1].show()
