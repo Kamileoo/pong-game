@@ -8,7 +8,7 @@ CREATE TABLE achivements (
     badge VARCHAR(120));
 CREATE TABLE guilds(
     name varchar(30) PRIMARY KEY,
-    password CHAR(72),
+    password CHAR(72)
 );
 CREATE TABLE users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -24,8 +24,10 @@ CREATE TABLE users (
     guild varchar(30) NULL,
     FOREIGN KEY (guild) REFERENCES guilds(name) ON DELETE SET NULL ON UPDATE CASCADE);
 CREATE TABLE got_achivements (
-    achivement_name VARCHAR(30) REFERENCES achivements(name) ON DELETE CASCADE,
-    user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
+    achivement_name VARCHAR(30),
+    FOREIGN KEY (achivement_name) REFERENCES achivements(name) ON DELETE CASCADE,
+    user_id BIGINT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     date DATETIME NOT NULL,
     PRIMARY KEY (achivement_name, user_id)
 );
@@ -40,8 +42,10 @@ CREATE TABLE ip_addresses(
 CREATE TABLE logins_history(
     operating_system VARCHAR(40) REFERENCES operating_systems(name),
     system_version VARCHAR(10) REFERENCES operating_systems(version),
-    ip_address VARCHAR(15) REFERENCES ip_addresses(ip_address),
-    user_id BIGINT REFERENCES users(user_id),
+    ip_address VARCHAR(15),
+    FOREIGN KEY (ip_address) REFERENCES ip_addresses(ip_address),
+    user_id BIGINT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     login_time DATETIME NOT NULL,
     logout_time DATETIME NOT NULL,
     PRIMARY KEY(operating_system, system_version, ip_address, user_id, logout_time)
@@ -53,8 +57,10 @@ CREATE TABLE games(
     end_time datetime not null
 );
 CREATE TABLE participants(
-    game_id BIGINT REFERENCES games(game_id),
-    user_id BIGINT REFERENCES users(user_id),
+    game_id BIGINT,
+    FOREIGN KEY (game_id) REFERENCES games(game_id),
+    user_id BIGINT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     status ENUM('W', 'L', 'T'),
     score SMALLINT NOT NULL,
     PRIMARY KEY (game_id, user_id)
@@ -118,7 +124,7 @@ VALUES(
 END$$
 
 drop trigger if exists new_ip$$
-create trigger new_ip BEFORE UPDATE
+create trigger new_ip BEFORE INSERT
 ON logins_history FOR EACH ROW
 BEGIN
     DECLARE ip_exists BOOL;
@@ -130,7 +136,7 @@ BEGIN
 END$$
 
 drop trigger if exists new_os$$
-create trigger new_os BEFORE UPDATE
+create trigger new_os BEFORE INSERT
 ON logins_history FOR EACH ROW
 BEGIN
     DECLARE os_exists BOOL;
@@ -138,7 +144,7 @@ BEGIN
     WHERE name=NEW.operating_system and 
     version=NEW.system_version into os_exists;
     IF os_exists=0 THEN 
-    INSERT INTO operating_ststems 
+    INSERT INTO operating_systems 
     values(NEW.operating_system,NEW.system_version);
     END IF;
 END$$
@@ -156,6 +162,24 @@ BEGIN
             NOW()
         );
     END IF;
+END$$
+
+drop trigger if exists guild_update$$
+create trigger guild_update AFTER UPDATE
+ON users FOR EACH ROW
+BEGIN
+	DECLARE no_users BIGINT;
+
+	IF OLD.guild IS NOT NULL THEN
+		SELECT COUNT(*)
+		FROM users
+		WHERE guild=OLD.guild
+		INTO no_users;
+		
+		IF no_users = 0 THEN
+			DELETE FROM guilds WHERE name = OLD.guild;
+		END IF;
+	END IF;
 END$$
 DELIMITER ;
 -- fill databes with examples
